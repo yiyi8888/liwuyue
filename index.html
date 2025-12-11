@@ -1,552 +1,143 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>趣味放屁大挑战 🎮</title>
-    <style>
-        /* 全局样式重置与基础配置 */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: "Comic Sans MS", "微软雅黑", "PingFang SC", sans-serif;
-            -webkit-user-select: none;
-            user-select: none;
-            -webkit-touch-callout: none;
-            touch-callout: none;
-        }
-
-        :root {
-            /* 主题色配置 */
-            --primary-color: #FF6B6B;
-            --secondary-color: #4ECDC4;
-            --bg-gradient: linear-gradient(135deg, #E6F7FF 0%, #B3E0FF 100%);
-            --start-screen-gradient: linear-gradient(135deg, #FFECD2 0%, #FCB69F 100%);
-            --card-bg: #FFFFFF;
-            --text-color: #333333;
-            --light-text: #666666;
-            --shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-            --shadow-hover: 0 12px 32px rgba(0, 0, 0, 0.18);
-            --radius: 24px;
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        body {
-            background: var(--bg-gradient);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            padding: 16px;
-        }
-
-        /* 游戏容器 - 卡片化设计 */
-        .game-container {
-            position: relative;
-            width: 95vw;
-            height: 85vh;
-            max-width: 600px;
-            background: var(--card-bg);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            overflow: hidden;
-            touch-action: none;
-            -webkit-tap-highlight-color: transparent;
-            transition: var(--transition);
-        }
-
-        /* 开始界面 - 渐变+动效 */
-        .start-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--start-screen-gradient);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            border-radius: var(--radius);
-            padding: 20px;
-            text-align: center;
-            /* 轻微动画 */
-            animation: startScreenFade 1s ease-out;
-        }
-
-        @keyframes startScreenFade {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        .start-screen h1 {
-            font-size: 32px;
-            color: var(--text-color);
-            margin-bottom: 8px;
-            /* 文字渐变 */
-            background: linear-gradient(90deg, #FF6B6B, #FF8E53);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-
-        .start-screen p {
-            font-size: 16px;
-            color: var(--light-text);
-            margin-bottom: 32px;
-            line-height: 1.5;
-        }
-
-        /* 按钮通用样式 - 质感设计 */
-        .btn {
-            padding: 16px 48px;
-            font-size: 20px;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: var(--transition);
-            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
-            color: white;
-            font-weight: 600;
-            -webkit-appearance: none;
-            appearance: none;
-        }
-
-        .btn-primary {
-            background: var(--primary-color);
-        }
-
-        .btn-primary:hover,
-        .btn-primary:active {
-            background: #FF5252;
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-hover);
-        }
-
-        .btn-secondary {
-            background: var(--secondary-color);
-            box-shadow: 0 4px 12px rgba(78, 205, 196, 0.3);
-        }
-
-        .btn-secondary:hover,
-        .btn-secondary:active {
-            background: #45B7AA;
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-hover);
-        }
-
-        /* 分数面板 - 悬浮卡片 */
-        .score-panel {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            font-size: 20px;
-            color: var(--text-color);
-            background: rgba(255, 255, 255, 0.9);
-            padding: 12px 24px;
-            border-radius: 50px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            font-weight: 600;
-            z-index: 10;
-        }
-
-        .score-panel span {
-            color: var(--primary-color);
-            margin-left: 4px;
-        }
-
-        /* 角色与检查员 - 精细化设计 */
-        .character {
-            position: absolute;
-            bottom: 80px; /* 核心修改：从40px改为80px，上移40px */
-            left: 50%;
-            transform: translateX(-50%);
-            width: 110px;
-            height: 160px;
-            z-index: 5;
-            /* 呼吸动画 */
-            animation: characterBreathe 3s ease-in-out infinite;
-        }
-
-        @keyframes characterBreathe {
-            0%, 100% { transform: translateX(-50%) scale(1); }
-            50% { transform: translateX(-50%) scale(1.05); }
-        }
-
-        .character img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
-        }
-
-        .inspector {
-            position: absolute;
-            top: 30px;
-            right: -100px;
-            width: 80px;
-            height: 80px;
-            transition: right 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 10;
-            /* 旋转动画 */
-            animation: inspectorRotate 4s ease-in-out infinite;
-        }
-
-        @keyframes inspectorRotate {
-            0%, 100% { transform: rotate(0deg); }
-            50% { transform: rotate(5deg); }
-        }
-
-        .inspector img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
-        }
-
-        /* 屁效果 - 同步上移，匹配角色位置 */
-        .fart {
-            position: absolute;
-            bottom: 100px; /* 核心修改：从60px改为100px，同步上移 */
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80px;
-            height: 80px;
-            background: radial-gradient(circle, #FFF3B0 0%, #F9C74F 80%, transparent 100%);
-            border-radius: 50%;
-            opacity: 0;
-            animation: fart-animation 1s ease-out;
-            z-index: 4;
-            filter: blur(2px);
-        }
-
-        @keyframes fart-animation {
-            0% {
-                opacity: 0.9;
-                transform: translateX(-50%) scale(0.5);
-            }
-            50% {
-                opacity: 0.7;
-                transform: translateX(-50%) scale(1.3);
-            }
-            100% {
-                opacity: 0;
-                transform: translateX(-50%) scale(1.6);
-            }
-        }
-
-        /* 提示文本 - 柔和样式 */
-        .hint {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: var(--light-text);
-            font-size: 14px;
-            text-align: center;
-            padding: 8px 16px;
-            background: rgba(255, 255, 255, 0.7);
-            border-radius: 50px;
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-            z-index: 6; /* 确保文字在角色下方但层级更高，防止被遮挡 */
-        }
-
-        /* 游戏结束界面 - 半透明磨砂 */
-        .game-over {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 99;
-            color: white;
-            font-size: 32px;
-            border-radius: var(--radius);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            /* 弹出动画 */
-            animation: gameOverFade 0.5s ease-out;
-        }
-
-        @keyframes gameOverFade {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        .game-over p {
-            margin-bottom: 16px;
-            text-align: center;
-        }
-
-        .game-over p:nth-child(2) {
-            font-size: 18px;
-            color: #FFD580;
-            margin-bottom: 24px;
-        }
-
-        .game-over p span {
-            color: var(--primary-color);
-            font-weight: 600;
-        }
-
-        /* 响应式适配 - 同步调整移动端角色位置 */
-        @media (max-width: 480px) {
-            .start-screen h1 {
-                font-size: 26px;
-            }
-
-            .btn {
-                padding: 14px 36px;
-                font-size: 18px;
-            }
-
-            .score-panel {
-                font-size: 18px;
-                padding: 10px 20px;
-                top: 15px;
-                left: 15px;
-            }
-
-            .character {
-                width: 90px;
-                height: 140px;
-                bottom: 70px; /* 移动端同步上移 */
-            }
-
-            .inspector {
-                width: 70px;
-                height: 70px;
-                top: 25px;
-            }
-
-            .fart {
-                bottom: 90px; /* 移动端屁效果同步上移 */
-            }
-
-            .game-over {
-                font-size: 28px;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>放屁大挑战</title>
+  <!-- 1. 精简Tailwind CSS（仅加载核心样式，关闭自动前缀） -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography" data-turbo-track="reload"></script>
+  <script>
+    // 极简Tailwind配置，减少样式生成体积
+    tailwind.config = {
+      corePlugins: {
+        // 禁用未使用的核心插件，减少样式体积
+        preflight: false,
+        container: true,
+      },
+      theme: {
+        extend: {
+          colors: {
+            primary: '#65A30D',
+            secondary: '#FBBF24',
+            accent: '#EC4899',
+            dark: '#1F2937',
+          },
+          // 移除未必要的字体引入，改用系统默认趣味字体
+          fontFamily: {
+            comic: ['"Microsoft YaHei"', 'SimHei', 'cursive'],
+          },
+        },
+      }
+    }
+    // 开启Tailwind生产模式（压缩样式）
+    if (process.env.NODE_ENV === 'production') {
+      tailwind.config.mode = 'jit'
+    }
+  </script>
+  
+  <!-- 2. 内联核心样式，避免外部CSS请求 -->
+  <style>
+    /* 内联关键样式，替代外部Font Awesome/Google Fonts */
+    .icon-gamepad::before {
+      content: "🎮";
+      margin-right: 12px;
+    }
+    .text-shadow {
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    .btn-pop {
+      transform: translateY(0);
+      transition: all 0.2s ease; /* 缩短过渡时间，提升响应速度 */
+    }
+    .btn-pop:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.15);
+    }
+    .btn-pop:active {
+      transform: translateY(2px);
+    }
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+      100% { transform: translateY(0px); }
+    }
+    .animate-float {
+      animation: float 3s ease-in-out infinite;
+    }
+    /* 页面加载过渡（精简版） */
+    body {
+      opacity: 1;
+      transition: opacity 0.3s ease;
+    }
+  </style>
 </head>
-<body>
-    <div class="game-container" id="gameContainer">
-        <!-- 开始界面 -->
-        <div class="start-screen" id="startScreen">
-            <h1>😜 偷偷放屁大挑战 😜</h1>
-            <p>点击/触摸屏幕让角色放屁得分<br>检查员出现时点击会被抓哦！</p>
-            <button class="btn btn-primary" id="startBtn">开始游戏</button>
-        </div>
 
-        <!-- 分数面板 -->
-        <div class="score-panel">
-            分数: <span id="score">0</span>
-        </div>
+<!-- 3. 简化body样式，减少渲染负担 -->
+<body class="min-h-screen bg-white font-comic overflow-x-hidden">
+  <!-- 装饰元素（降低动画优先级，减少性能消耗） -->
+  <div class="absolute top-10 left-10 text-accent text-6xl opacity-20 animate-float" style="will-change: transform;">
+    噗～💨
+  </div>
+  <div class="absolute bottom-10 right-10 text-primary text-7xl opacity-20 animate-float" style="animation-delay: 1s; will-change: transform;">
+    噗～💨
+  </div>
+  
+  <!-- 主容器（精简布局，减少嵌套） -->
+  <div class="container mx-auto px-4 py-8 flex flex-col items-center justify-center min-h-screen">
+    <!-- 标题区域（简化响应式字体，减少计算） -->
+    <header class="text-center mb-12 animate-float">
+      <h1 class="text-4xl md:text-6xl font-bold text-dark text-shadow mb-4">
+        放屁大挑战
+      </h1>
+      <p class="text-lg md:text-xl text-dark/80 max-w-xl mx-auto">
+        选择你的挑战模式，开始欢乐的放屁冒险！
+      </p>
+    </header>
+    
+    <!-- 游戏按钮区域（简化grid，提升渲染速度） -->
+    <main class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl w-full">
+      <!-- 游戏1按钮（移除外部图标，改用emoji） -->
+	 
+      <button class="btn-pop bg-primary/90 hover:bg-primary text-white py-7 px-5 rounded-xl text-lg font-semibold flex items-center justify-center" onclick="window.location.href='./game1.html'" >
+        <span class="icon-gamepad"></span> 游戏1
+      </button>
+      
+	  
+      <button class="btn-pop bg-secondary/90 hover:bg-secondary text-dark py-7 px-5 rounded-xl text-lg font-semibold flex items-center justify-center" onclick="window.location.href='./game2.html'">
+        <span class="icon-gamepad"></span> 游戏2
+      </button>
+      
+      <button class="btn-pop bg-accent/90 hover:bg-accent text-white py-7 px-5 rounded-xl text-lg font-semibold flex items-center justify-center">
+        <span class="icon-gamepad"></span> 敬请期待_李五月
+      </button>
+      
+      <button class="btn-pop bg-dark/90 hover:bg-dark text-white py-7 px-5 rounded-xl text-lg font-semibold flex items-center justify-center">
+        <span class="icon-gamepad"></span> 敬请期待_李五月
+      </button>
+    </main>
+    
+    <!-- 页脚（精简文字） -->
+    <footer class="mt-12 text-center text-dark/70">
+      <p class="text-xs">易鑫颖专属</p>
+    </footer>
+  </div>
 
-        <!-- 检查员 -->
-        <div class="inspector" id="inspector">
-            <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/254e3bba80264318a1fb088a9fa54a4d.jpg~tplv-a9rns2rl98-image.png?rcl=2025121016361348676DD9269F2FAB25FA&rk3s=8e244e95&rrcfp=dafada99&x-expires=2081579774&x-signature=NaQDFxXWHpG40DCLB4AIpPHhZhk%3D" alt="检查员" loading="lazy">
-        </div>
-
-        <!-- 游戏角色 -->
-        <div class="character" id="character">
-            <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/a97e6a8fb159412f9d70e808207e7d4c.jpg~tplv-a9rns2rl98-image.png?rcl=2025121016361348676DD9269F2FAB25FA&rk3s=8e244e95&rrcfp=dafada99&x-expires=2081579774&x-signature=B1nwmGybljaxf6Hk%2B86kpa%2FHaVY%3D" alt="游戏角色" loading="lazy">
-        </div>
-
-        <!-- 屁效果容器 -->
-        <div id="fart-container"></div>
-
-        <!-- 提示文本 -->
-        <div class="hint">点击屏幕放屁 | 检查员出现时点击会被抓！</div>
-
-        <!-- 游戏结束界面 -->
-        <div class="game-over" id="gameOver">
-            <p>游戏结束！</p>
-            <p>被检查员抓到了😵</p>
-            <p>最终得分: <span id="finalScore">0</span></p>
-            <button class="btn btn-secondary" id="restartBtn">再来一次</button>
-        </div>
-    </div>
-
-    <script>
-        // 全局变量
-        var score = 0;
-        var gameRunning = false;
-        var inspectorProbability = 0.25;
-        var inspectorVisible = false;
-        var fartCooldown = false;
-        var inspectorTimer = null;
-        var disableSound = false; // 可自行开启音效：false
-
-        // 页面加载完成后执行
-        window.addEventListener('load', function() {
-            // 获取DOM元素
-            var startScreen = document.getElementById('startScreen');
-            var startBtn = document.getElementById('startBtn');
-            var gameOverScreen = document.getElementById('gameOver');
-            var restartBtn = document.getElementById('restartBtn');
-            var scoreElement = document.getElementById('score');
-            var finalScoreElement = document.getElementById('finalScore');
-            var character = document.getElementById('character');
-            var inspector = document.getElementById('inspector');
-            var gameContainer = document.getElementById('gameContainer');
-            var fartContainer = document.getElementById('fart-container');
-
-            // 绑定事件（兼容点击/触摸）
-            startBtn.addEventListener('click', startGameHandler);
-            startBtn.addEventListener('touchstart', function(e) {
-                e.preventDefault();
-                startGameHandler();
-            });
-
-            restartBtn.addEventListener('click', restartGameHandler);
-            restartBtn.addEventListener('touchstart', function(e) {
-                e.preventDefault();
-                restartGameHandler();
-            });
-
-            gameContainer.addEventListener('click', gameContainerClick);
-            gameContainer.addEventListener('touchstart', function(e) {
-                e.preventDefault();
-                gameContainerClick();
-            });
-
-            // 开始游戏逻辑
-            function startGameHandler() {
-                startScreen.style.display = 'none';
-                gameRunning = true;
-                score = 0;
-                scoreElement.textContent = score;
-                inspectorProbability = 0.25;
-
-                // 清除旧定时器
-                if (inspectorTimer) clearInterval(inspectorTimer);
-                
-                // 启动检查员定时器
-                inspectorTimer = setInterval(function() {
-                    if (!gameRunning) return;
-                    if (Math.random() < inspectorProbability && !inspectorVisible) {
-                        showInspector();
-                        inspectorProbability = Math.min(0.6, inspectorProbability + 0.02);
-                    }
-                }, 1000);
-            }
-
-            // 重新开始逻辑
-            function restartGameHandler() {
-                gameOverScreen.style.display = 'none';
-                gameRunning = true;
-                score = 0;
-                scoreElement.textContent = score;
-                inspectorProbability = 0.25;
-                inspectorVisible = false;
-                inspector.style.right = '-100px';
-
-                if (inspectorTimer) clearInterval(inspectorTimer);
-                inspectorTimer = setInterval(function() {
-                    if (!gameRunning) return;
-                    if (Math.random() < inspectorProbability && !inspectorVisible) {
-                        showInspector();
-                        inspectorProbability = Math.min(0.6, inspectorProbability + 0.02);
-                    }
-                }, 1000);
-            }
-
-            // 游戏容器点击/触摸逻辑
-            function gameContainerClick() {
-                if (!gameRunning || fartCooldown) return;
-                
-                if (inspectorVisible) {
-                    gameOver();
-                    return;
-                }
-                fart();
-            }
-
-            // 放屁逻辑
-            function fart() {
-                fartCooldown = true;
-                
-                // 音效（可选开启）
-                if (!disableSound) {
-                    try {
-                        var fartSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-cartoon-fart-618.mp3');
-                        fartSound.volume = 0.5;
-                        fartSound.play();
-                    } catch (e) {}
-                }
-
-                // 创建屁效果
-                var fartElement = document.createElement('div');
-                fartElement.className = 'fart';
-                fartContainer.appendChild(fartElement);
-
-                // 角色震动效果
-                character.style.transform = 'translateX(-50%) scale(1.15)';
-                setTimeout(function() {
-                    character.style.transform = 'translateX(-50%) scale(1)';
-                }, 200);
-
-                // 加分
-                score += 10;
-                scoreElement.textContent = score;
-
-                // 移除屁效果
-                setTimeout(function() {
-                    fartElement.remove();
-                    fartCooldown = false;
-                }, 1000);
-            }
-
-            // 显示检查员
-            function showInspector() {
-                inspectorVisible = true;
-                inspector.style.right = '20px';
-                
-                setTimeout(function() {
-                    if (!gameRunning) return;
-                    inspector.style.right = '-100px';
-                    setTimeout(function() {
-                        inspectorVisible = false;
-                    }, 1000);
-                }, 2000);
-            }
-
-            // 游戏结束
-            function gameOver() {
-                gameRunning = false;
-                inspectorVisible = false;
-                inspector.style.right = '-100px';
-
-                // 失败音效
-                if (!disableSound) {
-                    try {
-                        var caughtSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-failure-arcade-alert-notification-240.mp3');
-                        caughtSound.volume = 0.5;
-                        caughtSound.play();
-                    } catch (e) {}
-                }
-
-                finalScoreElement.textContent = score;
-                gameOverScreen.style.display = 'flex';
-                if (inspectorTimer) clearInterval(inspectorTimer);
-            }
+  <!-- 4. 精简脚本，延迟加载非核心逻辑 -->
+  <script defer>
+    // 延迟执行脚本，不阻塞页面渲染
+    document.addEventListener('DOMContentLoaded', () => {
+      // 按钮点击效果（简化逻辑）
+      document.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          console.log('噗～💨 进入' + btn.textContent.trim() + '！');
+          // 简化点击反馈
+          btn.style.transform = 'scale(0.95)';
+          setTimeout(() => {
+            btn.style.transform = '';
+          }, 150);
         });
-    </script>
+      });
+    });
+  </script>
 </body>
 </html>
