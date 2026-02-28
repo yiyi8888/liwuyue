@@ -1,143 +1,1675 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>放屁大挑战</title>
-  <!-- 1. 精简Tailwind CSS（仅加载核心样式，关闭自动前缀） -->
-  <script src="https://cdn.tailwindcss.com?plugins=forms,typography" data-turbo-track="reload"></script>
-  <script>
-    // 极简Tailwind配置，减少样式生成体积
-    tailwind.config = {
-      corePlugins: {
-        // 禁用未使用的核心插件，减少样式体积
-        preflight: false,
-        container: true,
-      },
-      theme: {
-        extend: {
-          colors: {
-            primary: '#65A30D',
-            secondary: '#FBBF24',
-            accent: '#EC4899',
-            dark: '#1F2937',
-          },
-          // 移除未必要的字体引入，改用系统默认趣味字体
-          fontFamily: {
-            comic: ['"Microsoft YaHei"', 'SimHei', 'cursive'],
-          },
-        },
-      }
-    }
-    // 开启Tailwind生产模式（压缩样式）
-    if (process.env.NODE_ENV === 'production') {
-      tailwind.config.mode = 'jit'
-    }
-  </script>
-  
-  <!-- 2. 内联核心样式，避免外部CSS请求 -->
-  <style>
-    /* 内联关键样式，替代外部Font Awesome/Google Fonts */
-    .icon-gamepad::before {
-      content: "🎮";
-      margin-right: 12px;
-    }
-    .text-shadow {
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-    }
-    .btn-pop {
-      transform: translateY(0);
-      transition: all 0.2s ease; /* 缩短过渡时间，提升响应速度 */
-    }
-    .btn-pop:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.15);
-    }
-    .btn-pop:active {
-      transform: translateY(2px);
-    }
-    @keyframes float {
-      0% { transform: translateY(0px); }
-      50% { transform: translateY(-10px); }
-      100% { transform: translateY(0px); }
-    }
-    .animate-float {
-      animation: float 3s ease-in-out infinite;
-    }
-    /* 页面加载过渡（精简版） */
-    body {
-      opacity: 1;
-      transition: opacity 0.3s ease;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iOS被拒处理库 - 修复版</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #0066CC;
+            --secondary-color: #4A90D9;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --border-color: #dee2e6;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+        
+        .sidebar {
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            min-height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 250px;
+            padding: 20px 0;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 12px 20px;
+            margin: 5px 10px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            background-color: rgba(255,255,255,0.1);
+            color: white;
+        }
+        
+        .nav-link i {
+            width: 20px;
+            margin-right: 10px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .stat-card .icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+        
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-card .label {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .guideline-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s;
+        }
+        
+        .guideline-card:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 2px 8px rgba(0,102,204,0.1);
+        }
+        
+        .difficulty-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .difficulty-low {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .difficulty-medium {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .difficulty-high {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: #0052a3;
+            border-color: #0052a3;
+        }
+        
+        .tab-content {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+        }
+        
+        .mail-preview {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+        }
+        
+        .reply-preview {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            line-height: 1.6;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+        }
+        
+        .top-guideline-item {
+            padding: 10px 15px;
+            border-left: 4px solid var(--primary-color);
+            background: #f8f9fa;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .top-guideline-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+        
+        .product-info {
+            background: #e8f4fd;
+            border-left: 4px solid var(--primary-color);
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        
+        .solution-item {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 8px;
+        }
+        
+        .solution-item.success {
+            border-left: 4px solid var(--success-color);
+        }
+        
+        .solution-item.failed {
+            border-left: 4px solid var(--danger-color);
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                position: static;
+                min-height: auto;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
 </head>
+<body>
+    <!-- 侧边栏导航 -->
+    <div class="sidebar">
+        <div class="text-center mb-4">
+            <h3><i class="fas fa-mobile-alt"></i> iOS被拒处理库</h3>
+            <small class="text-muted">修复版 v4.0</small>
+        </div>
+        
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link active" href="#" data-page="home">
+                    <i class="fas fa-home"></i> 首页概览
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-page="guidelines">
+                    <i class="fas fa-book"></i> 条款库
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-page="mail">
+                    <i class="fas fa-envelope"></i> 邮件处理
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-page="statistics">
+                    <i class="fas fa-chart-bar"></i> 数据统计
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-page="data-management">
+                    <i class="fas fa-database"></i> 数据管理
+                </a>
+            </li>
+            <li class="nav-item mt-4">
+                <div class="px-3">
+                    <small class="text-muted">数据统计</small>
+                    <div class="text-white mt-2">
+                        <div><i class="fas fa-history"></i> <span id="sidebar-total">加载中...</span> 条案例</div>
+                        <div><i class="fas fa-check-circle"></i> <span id="sidebar-rate">加载中...</span> 成功率</div>
+                        <div><i class="fas fa-tags"></i> <span id="sidebar-unique">加载中...</span> 个条款</div>
+                    </div>
+                </div>
+            </li>
+        </ul>
+    </div>
 
-<!-- 3. 简化body样式，减少渲染负担 -->
-<body class="min-h-screen bg-white font-comic overflow-x-hidden">
-  <!-- 装饰元素（降低动画优先级，减少性能消耗） -->
-  <div class="absolute top-10 left-10 text-accent text-6xl opacity-20 animate-float" style="will-change: transform;">
-    噗～💨
-  </div>
-  <div class="absolute bottom-10 right-10 text-primary text-7xl opacity-20 animate-float" style="animation-delay: 1s; will-change: transform;">
-    噗～💨
-  </div>
-  
-  <!-- 主容器（精简布局，减少嵌套） -->
-  <div class="container mx-auto px-4 py-8 flex flex-col items-center justify-center min-h-screen">
-    <!-- 标题区域（简化响应式字体，减少计算） -->
-    <header class="text-center mb-12 animate-float">
-      <h1 class="text-4xl md:text-6xl font-bold text-dark text-shadow mb-4">
-        放屁大挑战
-      </h1>
-      <p class="text-lg md:text-xl text-dark/80 max-w-xl mx-auto">
-        选择你的挑战模式，开始欢乐的放屁冒险！
-      </p>
-    </header>
-    
-    <!-- 游戏按钮区域（简化grid，提升渲染速度） -->
-    <main class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl w-full">
-      <!-- 游戏1按钮（移除外部图标，改用emoji） -->
-	 
-      <button class="btn-pop bg-primary/90 hover:bg-primary text-white py-7 px-5 rounded-xl text-lg font-semibold flex items-center justify-center" onclick="window.location.href='./game1.html'" >
-        <span class="icon-gamepad"></span> 游戏1
-      </button>
-      
-	  
-      <button class="btn-pop bg-secondary/90 hover:bg-secondary text-dark py-7 px-5 rounded-xl text-lg font-semibold flex items-center justify-center" onclick="window.location.href='./game2.html'">
-        <span class="icon-gamepad"></span> 游戏2
-      </button>
-      
-      <button class="btn-pop bg-accent/90 hover:bg-accent text-white py-7 px-5 rounded-xl text-lg font-semibold flex items-center justify-center">
-        <span class="icon-gamepad"></span> 敬请期待_李五月
-      </button>
-      
-      <button class="btn-pop bg-dark/90 hover:bg-dark text-white py-7 px-5 rounded-xl text-lg font-semibold flex items-center justify-center">
-        <span class="icon-gamepad"></span> 敬请期待_李五月
-      </button>
-    </main>
-    
-    <!-- 页脚（精简文字） -->
-    <footer class="mt-12 text-center text-dark/70">
-      <p class="text-xs">易鑫颖专属</p>
-    </footer>
-  </div>
+    <!-- 主内容区 -->
+    <div class="main-content">
+        <!-- 首页概览 -->
+        <div id="home-page" class="page-content">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-home text-primary"></i> 首页概览</h2>
+                <div class="text-muted">
+                    <i class="fas fa-sync-alt"></i> 最后更新: <span id="last-update">2026-02-28</span>
+                </div>
+            </div>
+            
+            <!-- 统计卡片 -->
+            <div class="row mb-4">
+                <div class="col-md-3 mb-3">
+                    <div class="stat-card" onclick="showPage('guidelines')">
+                        <div class="icon" style="background-color: rgba(0,102,204,0.1); color: var(--primary-color);">
+                            <i class="fas fa-history"></i>
+                        </div>
+                        <div class="value" id="total-cases">0</div>
+                        <div class="label">总案例数</div>
+                        <small class="text-muted">点击查看所有条款</small>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="stat-card" onclick="showPage('statistics')">
+                        <div class="icon" style="background-color: rgba(40,167,69,0.1); color: var(--success-color);">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="value" id="success-rate">0%</div>
+                        <div class="label">总体成功率</div>
+                        <small class="text-muted">点击查看详细统计</small>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="stat-card" onclick="showPage('guidelines')">
+                        <div class="icon" style="background-color: rgba(255,193,7,0.1); color: var(--warning-color);">
+                            <i class="fas fa-tags"></i>
+                        </div>
+                        <div class="value" id="unique-guidelines">0</div>
+                        <div class="label">唯一条款</div>
+                        <small class="text-muted">点击查看条款库</small>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="stat-card" onclick="showPage('mail')">
+                        <div class="icon" style="background-color: rgba(220,53,69,0.1); color: var(--danger-color);">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="value" id="common-guidelines">0</div>
+                        <div class="label">高频条款</div>
+                        <small class="text-muted">点击处理新邮件</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 高频条款TOP10 -->
+            <div class="tab-content mb-4">
+                <h4 class="mb-3"><i class="fas fa-fire text-danger"></i> 高频被拒条款TOP10</h4>
+                <div id="top-guidelines-list">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">加载中...</span>
+                        </div>
+                        <p class="mt-2">正在加载数据...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 快捷入口 -->
+            <div class="tab-content">
+                <h4 class="mb-3"><i class="fas fa-bolt text-warning"></i> 快捷入口</h4>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <button class="btn btn-outline-primary w-100 py-3" onclick="showPage('mail')">
+                            <i class="fas fa-envelope fa-2x mb-2"></i><br>
+                            处理新邮件
+                        </button>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <button class="btn btn-outline-success w-100 py-3" onclick="showPage('guidelines')">
+                            <i class="fas fa-search fa-2x mb-2"></i><br>
+                            搜索条款库
+                        </button>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <button class="btn btn-outline-info w-100 py-3" onclick="showPage('data-management')">
+                            <i class="fas fa-upload fa-2x mb-2"></i><br>
+                            导入新数据
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-  <!-- 4. 精简脚本，延迟加载非核心逻辑 -->
-  <script defer>
-    // 延迟执行脚本，不阻塞页面渲染
-    document.addEventListener('DOMContentLoaded', () => {
-      // 按钮点击效果（简化逻辑）
-      document.querySelectorAll('button').forEach(btn => {
-        btn.addEventListener('click', () => {
-          console.log('噗～💨 进入' + btn.textContent.trim() + '！');
-          // 简化点击反馈
-          btn.style.transform = 'scale(0.95)';
-          setTimeout(() => {
-            btn.style.transform = '';
-          }, 150);
+        <!-- 条款库页面 -->
+        <div id="guidelines-page" class="page-content" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-book text-primary"></i> 条款库</h2>
+                <div class="d-flex">
+                    <input type="text" class="form-control me-2" id="search-guidelines" placeholder="搜索条款编号、标题或描述..." style="width: 300px;">
+                    <select class="form-select me-2" id="filter-category" style="width: 200px;">
+                        <option value="">所有分类</option>
+                        <option value="安全">安全、隐私与法律</option>
+                        <option value="性能">性能与功能</option>
+                        <option value="业务">业务与支付</option>
+                        <option value="设计">设计与用户体验</option>
+                        <option value="隐私">隐私与数据保护</option>
+                    </select>
+                    <select class="form-select" id="filter-difficulty" style="width: 150px;">
+                        <option value="">所有难度</option>
+                        <option value="低">低难度</option>
+                        <option value="中">中难度</option>
+                        <option value="高">高难度</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- 难度说明 -->
+            <div class="alert alert-info mb-4">
+                <h5><i class="fas fa-info-circle"></i> 难度定义说明</h5>
+                <div class="row mt-2">
+                    <div class="col-md-4">
+                        <span class="difficulty-badge difficulty-low me-2">低难度</span>
+                        简单修改，成功率>80%，如文案调整、提供信息等
+                    </div>
+                    <div class="col-md-4">
+                        <span class="difficulty-badge difficulty-medium me-2">中难度</span>
+                        中等修改，成功率50-80%，如功能修改、重新打包等
+                    </div>
+                    <div class="col-md-4">
+                        <span class="difficulty-badge difficulty-high me-2">高难度</span>
+                        复杂修改，成功率<50%，如架构调整、多次被拒等
+                    </div>
+                </div>
+            </div>
+            
+            <div id="guidelines-list">
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                    <p class="mt-3">正在加载条款数据...</p>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <button class="btn btn-outline-primary" onclick="loadMoreGuidelines()" id="load-more-btn" style="display: none;">
+                    <i class="fas fa-plus"></i> 加载更多
+                </button>
+                <div id="no-more-data" class="text-muted mt-2" style="display: none;">没有更多数据了</div>
+            </div>
+        </div>
+
+        <!-- 邮件处理页面 -->
+        <div id="mail-page" class="page-content" style="display: none;">
+            <h2 class="mb-4"><i class="fas fa-envelope text-primary"></i> 邮件处理</h2>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="tab-content">
+                        <h4 class="mb-3">输入被拒邮件</h4>
+                        
+                        <div class="alert alert-info mb-3">
+                            <i class="fas fa-lightbulb"></i> 提示：支持中英文邮件，系统会自动识别Guideline编号并匹配历史解决方案
+                        </div>
+                        
+                        <textarea class="form-control mb-3" id="mail-input" rows="15" placeholder="请粘贴被拒邮件内容（支持中英文）..."></textarea>
+                        
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary" onclick="processMail()">
+                                <i class="fas fa-magic"></i> 智能解析邮件
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="clearMailInput()">
+                                <i class="fas fa-trash"></i> 清空输入
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="tab-content">
+                        <h4 class="mb-3">解析结果</h4>
+                        
+                        <div class="mb-3">
+                            <h5>识别到的条款</h5>
+                            <div class="alert" id="detected-guideline">
+                                <div class="text-muted">等待解析...</div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h5>历史处理方案</h5>
+                            <div id="recommended-solutions">
+                                <div class="text-muted">解析邮件后显示推荐方案</div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h5>邮件回复</h5>
+                            <div class="d-flex justify-content-between mb-2">
+                                <div>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="generateReply()">
+                                        <i class="fas fa-sync"></i> 生成回复
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-success" onclick="copyReply()">
+                                        <i class="fas fa-copy"></i> 复制回复
+                                    </button>
+                                </div>
+                                <select class="form-select form-select-sm" id="reply-language" style="width: 120px;">
+                                    <option value="bilingual">中英双语</option>
+                                    <option value="chinese">仅中文</option>
+                                    <option value="english">仅英文</option>
+                                </select>
+                            </div>
+                            <textarea class="form-control" id="reply-output" rows="10" placeholder="回复文案将在这里生成..."></textarea>
+                            <div class="mt-2">
+                                <small class="text-muted">您可以手动修改回复内容，然后点击"复制回复"使用</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 数据统计页面 -->
+        <div id="statistics-page" class="page-content" style="display: none;">
+            <h2 class="mb-4"><i class="fas fa-chart-bar text-primary"></i> 数据统计</h2>
+            
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <div class="chart-container">
+                        <h5>条款分类分布</h5>
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="chart-container">
+                        <h5>处理结果分布</h5>
+                        <canvas id="resultChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <h5>高频条款TOP15</h5>
+                <canvas id="topGuidelinesChart"></canvas>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="chart-container">
+                        <h5>难度分布</h5>
+                        <canvas id="difficultyChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="chart-container">
+                        <h5>月度被拒趋势</h5>
+                        <canvas id="monthlyTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 数据管理页面 -->
+        <div id="data-management-page" class="page-content" style="display: none;">
+            <h2 class="mb-4"><i class="fas fa-database text-primary"></i> 数据管理</h2>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="tab-content mb-4">
+                        <h4 class="mb-3"><i class="fas fa-upload"></i> 批量导入数据</h4>
+                        <p class="text-muted">上传新的Excel/CSV文件，系统会自动合并到现有知识库中</p>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">选择文件</label>
+                            <input class="form-control" type="file" id="data-file" accept=".xlsx,.xls,.csv">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">文件格式</label>
+                            <select class="form-select" id="file-format">
+                                <option value="excel">Excel (.xlsx, .xls)</option>
+                                <option value="csv">CSV (.csv)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">数据包含字段</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="field-product" checked>
+                                <label class="form-check-label" for="field-product">产品名称</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="field-date" checked>
+                                <label class="form-check-label" for="field-date">被拒时间</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="field-guideline" checked>
+                                <label class="form-check-label" for="field-guideline">被拒条款</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="field-solution" checked>
+                                <label class="form-check-label" for="field-solution">处理方式</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="field-result" checked>
+                                <label class="form-check-label" for="field-result">处理结果</label>
+                            </div>
+                        </div>
+                        
+                        <button class="btn btn-primary" onclick="uploadData()">
+                            <i class="fas fa-upload"></i> 上传并处理数据
+                        </button>
+                        
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle"></i> 支持格式：Excel/CSV，需包含必要字段
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="tab-content">
+                        <h4 class="mb-3"><i class="fas fa-plus-circle"></i> 手动添加案例</h4>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">产品名称</label>
+                                <input type="text" class="form-control" id="new-product" placeholder="例如：YW卡路里追踪国际IOS">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">被拒时间</label>
+                                <input type="date" class="form-control" id="new-date" value="2026-02-28">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">被拒条款</label>
+                            <input type="text" class="form-control" id="new-guideline" placeholder="例如：2.3.3-性能-准确的元数据">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">问题描述</label>
+                            <textarea class="form-control" id="new-reason" rows="3" placeholder="详细描述被拒原因"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">处理方式</label>
+                            <input type="text" class="form-control" id="new-solution" placeholder="例如：更新截图并回复">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">处理结果</label>
+                            <select class="form-select" id="new-result">
+                                <option value="过审">过审</option>
+                                <option value="依然被拒">依然被拒</option>
+                                <option value="放弃">放弃</option>
+                                <option value="重新发了">重新发了</option>
+                                <option value="暂时不处理">暂时不处理</option>
+                            </select>
+                        </div>
+                        
+                        <button class="btn btn-success" onclick="addNewCase()">
+                            <i class="fas fa-save"></i> 保存新案例
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 脚本 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 全局数据存储
+        let allGuidelines = [];
+        let filteredGuidelines = [];
+        let currentPage = 1;
+        const itemsPerPage = 20;
+        
+        // 页面切换
+        function showPage(pageId) {
+            // 隐藏所有页面
+            document.querySelectorAll('.page-content').forEach(page => {
+                page.style.display = 'none';
+            });
+            
+            // 显示目标页面
+            document.getElementById(pageId + '-page').style.display = 'block';
+            
+            // 更新导航栏状态
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('data-page') === pageId) {
+                    link.classList.add('active');
+                }
+            });
+            
+            // 页面特定初始化
+            if (pageId === 'statistics') {
+                setTimeout(initCharts, 100);
+            } else if (pageId === 'guidelines') {
+                if (allGuidelines.length === 0) {
+                    loadGuidelinesData();
+                }
+            } else if (pageId === 'mail') {
+                // 清空邮件输入
+                document.getElementById('mail-input').value = '';
+                // 清空解析结果
+                clearParseResults();
+            }
+        }
+
+        // 初始化导航
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const pageId = this.getAttribute('data-page');
+                showPage(pageId);
+            });
         });
-      });
-    });
-  </script>
+
+        // 加载条款数据
+        async function loadGuidelinesData() {
+            try {
+                // 模拟加载数据 - 实际应该从服务器或本地文件加载
+                const sampleData = await generateSampleData();
+                allGuidelines = sampleData;
+                filteredGuidelines = [...allGuidelines];
+                
+                // 更新统计数据
+                updateStatistics(sampleData);
+                
+                // 渲染条款列表
+                renderGuidelinesList();
+                
+                // 渲染TOP10列表
+                renderTopGuidelines();
+                
+            } catch (error) {
+                console.error('加载数据失败:', error);
+                showError('加载数据失败，请检查网络连接或数据文件');
+            }
+        }
+
+        // 生成示例数据（包含更多条款）
+        async function generateSampleData() {
+            // 这里生成包含更多条款的示例数据
+            // 实际应用中应该从服务器或本地文件加载真实数据
+            return [
+                {
+                    id: 1,
+                    number: "2.1",
+                    title: "2.1-所需信息",
+                    category: "性能与功能",
+                    simpleReason: "2.1",
+                    fullReason: "版号信息",
+                    solutions: ["再次提供", "录屏回复", "换icon", "回复并重新提审"],
+                    successRate: 72,
+                    useCount: 133,
+                    difficulty: "中",
+                    lastUsed: "2026-02-27",
+                    productName: "YW卡路里追踪国际IOS",
+                    rejectionDate: "2026-02-27"
+                },
+                {
+                    id: 2,
+                    number: "4.3",
+                    title: "4.3-设计-垃圾邮件",
+                    category: "设计与用户体验",
+                    simpleReason: "4.3",
+                    fullReason: "垃圾邮件",
+                    solutions: ["修改", "解释回复", "重新打包"],
+                    successRate: 62,
+                    useCount: 115,
+                    difficulty: "高",
+                    lastUsed: "2026-02-26",
+                    productName: "U挪车载人海外IOS",
+                    rejectionDate: "2026-02-26"
+                },
+                {
+                    id: 3,
+                    number: "2.1",
+                    title: "2.1-性能-应用程序完整性",
+                    category: "性能与功能",
+                    simpleReason: "2.1",
+                    fullReason: "应用程序完整性",
+                    solutions: ["技术处理", "重新打包", "修复问题"],
+                    successRate: 86,
+                    useCount: 92,
+                    difficulty: "中",
+                    lastUsed: "2026-02-25",
+                    productName: "健康管理应用",
+                    rejectionDate: "2026-02-25"
+                },
+                {
+                    id: 4,
+                    number: "2.3.3",
+                    title: "2.3.3-性能-准确的元数据",
+                    category: "性能与功能",
+                    simpleReason: "2.3.3",
+                    fullReason: "截图不显示当前版本",
+                    solutions: ["更新截图", "重新上传", "提供录屏"],
+                    successRate: 91,
+                    useCount: 65,
+                    difficulty: "低",
+                    lastUsed: "2026-02-28",
+                    productName: "教育类应用",
+                    rejectionDate: "2026-02-28"
+                },
+                {
+                    id: 5,
+                    number: "5.1.2",
+                    title: "5.1.2-法律-隐私-数据使用和共享",
+                    category: "隐私与数据保护",
+                    simpleReason: "5.1.2",
+                    fullReason: "数据使用和共享",
+                    solutions: ["更新隐私政策", "添加弹窗", "修改文案"],
+                    successRate: 75,
+                    useCount: 15,
+                    difficulty: "中",
+                    lastUsed: "2026-02-24",
+                    productName: "社交应用",
+                    rejectionDate: "2026-02-24"
+                },
+                {
+                    id: 6,
+                    number: "1.1",
+                    title: "1.1-安全-应用程序完整性",
+                    category: "安全、隐私与法律",
+                    simpleReason: "1.1",
+                    fullReason: "应用程序完整性检查失败",
+                    solutions: ["重新签名", "检查证书", "更新打包配置"],
+                    successRate: 85,
+                    useCount: 42,
+                    difficulty: "中",
+                    lastUsed: "2026-02-23",
+                    productName: "金融应用",
+                    rejectionDate: "2026-02-23"
+                },
+                {
+                    id: 7,
+                    number: "3.1.1",
+                    title: "3.1.1-业务-支付-应用内购买",
+                    category: "业务与支付",
+                    simpleReason: "3.1.1",
+                    fullReason: "应用内购买配置问题",
+                    solutions: ["配置内购项目", "更新商品信息", "重新提交审核"],
+                    successRate: 78,
+                    useCount: 38,
+                    difficulty: "高",
+                    lastUsed: "2026-02-22",
+                    productName: "游戏应用",
+                    rejectionDate: "2026-02-22"
+                },
+                {
+                    id: 8,
+                    number: "4.1",
+                    title: "4.1-设计-仿制品",
+                    category: "设计与用户体验",
+                    simpleReason: "4.1",
+                    fullReason: "应用设计相似度过高",
+                    solutions: ["重新设计UI", "修改应用图标", "调整功能布局"],
+                    successRate: 45,
+                    useCount: 27,
+                    difficulty: "高",
+                    lastUsed: "2026-02-21",
+                    productName: "工具类应用",
+                    rejectionDate: "2026-02-21"
+                },
+                {
+                    id: 9,
+                    number: "2.5",
+                    title: "2.5-性能-软件要求",
+                    category: "性能与功能",
+                    simpleReason: "2.5",
+                    fullReason: "不满足最低系统要求",
+                    solutions: ["调整目标版本", "优化兼容性", "更新依赖库"],
+                    successRate: 88,
+                    useCount: 23,
+                    difficulty: "中",
+                    lastUsed: "2026-02-20",
+                    productName: "企业应用",
+                    rejectionDate: "2026-02-20"
+                },
+                {
+                    id: 10,
+                    number: "5.1.1",
+                    title: "5.1.1-法律-隐私-数据收集和存储",
+                    category: "隐私与数据保护",
+                    simpleReason: "5.1.1",
+                    fullReason: "数据收集声明不完整",
+                    solutions: ["完善隐私政策", "添加数据收集说明", "更新权限描述"],
+                    successRate: 82,
+                    useCount: 19,
+                    difficulty: "中",
+                    lastUsed: "2026-02-19",
+                    productName: "健康监测应用",
+                    rejectionDate: "2026-02-19"
+                },
+                // 添加更多示例数据...
+                {
+                    id: 11,
+                    number: "2.4",
+                    title: "2.4-性能-硬件兼容性",
+                    category: "性能与功能",
+                    simpleReason: "2.4",
+                    fullReason: "设备兼容性问题",
+                    solutions: ["测试更多设备", "修复兼容性问题", "更新适配代码"],
+                    successRate: 79,
+                    useCount: 16,
+                    difficulty: "中",
+                    lastUsed: "2026-02-18",
+                    productName: "AR应用",
+                    rejectionDate: "2026-02-18"
+                },
+                {
+                    id: 12,
+                    number: "4.2",
+                    title: "4.2-设计-最低功能要求",
+                    category: "设计与用户体验",
+                    simpleReason: "4.2",
+                    fullReason: "功能过于简单",
+                    solutions: ["增加功能", "优化用户体验", "完善应用内容"],
+                    successRate: 68,
+                    useCount: 14,
+                    difficulty: "高",
+                    lastUsed: "2026-02-17",
+                    productName: "工具小应用",
+                    rejectionDate: "2026-02-17"
+                }
+            ];
+        }
+
+        // 更新统计数据
+        function updateStatistics(data) {
+            const totalCases = 1017; // 模拟总案例数
+            const successRate = 78.6; // 模拟成功率
+            const uniqueGuidelines = data.length;
+            
+            // 更新首页卡片
+            document.getElementById('total-cases').textContent = totalCases.toLocaleString();
+            document.getElementById('success-rate').textContent = successRate + '%';
+            document.getElementById('unique-guidelines').textContent = uniqueGuidelines;
+            document.getElementById('common-guidelines').textContent = Math.min(10, uniqueGuidelines);
+            
+            // 更新侧边栏
+            document.getElementById('sidebar-total').textContent = totalCases.toLocaleString();
+            document.getElementById('sidebar-rate').textContent = successRate + '%';
+            document.getElementById('sidebar-unique').textContent = uniqueGuidelines;
+            
+            // 更新最后更新时间
+            document.getElementById('last-update').textContent = new Date().toISOString().split('T')[0];
+        }
+
+        // 渲染高频条款TOP10
+        function renderTopGuidelines() {
+            const container = document.getElementById('top-guidelines-list');
+            
+            // 按使用次数排序
+            const topGuidelines = [...allGuidelines]
+                .sort((a, b) => b.useCount - a.useCount)
+                .slice(0, 10);
+            
+            container.innerHTML = topGuidelines.map(guideline => `
+                <div class="top-guideline-item" onclick="showGuidelineDetail(${guideline.id})">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${guideline.title}</strong>
+                            <div class="text-muted small">${guideline.fullReason || '无详细描述'}</div>
+                            <div class="mt-1">
+                                <span class="badge bg-secondary me-1">${guideline.productName || '未知产品'}</span>
+                                <span class="badge bg-light text-dark">${guideline.rejectionDate || '未知时间'}</span>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-primary">${guideline.useCount}次</span>
+                            <span class="badge bg-success ms-1">${guideline.successRate}%</span>
+                            <span class="difficulty-badge difficulty-${getDifficultyClass(guideline.difficulty)} ms-1">
+                                ${guideline.difficulty}难度
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 获取难度CSS类
+        function getDifficultyClass(difficulty) {
+            switch(difficulty) {
+                case '高': return 'high';
+                case '中': return 'medium';
+                case '低': 
+                default: return 'low';
+            }
+        }
+
+        // 渲染条款列表
+        function renderGuidelinesList() {
+            const container = document.getElementById('guidelines-list');
+            const searchTerm = document.getElementById('search-guidelines').value.toLowerCase();
+            const categoryFilter = document.getElementById('filter-category').value;
+            const difficultyFilter = document.getElementById('filter-difficulty').value;
+            
+            // 过滤数据
+            filteredGuidelines = allGuidelines.filter(guideline => {
+                const matchesSearch = guideline.title.toLowerCase().includes(searchTerm) || 
+                                     guideline.number.includes(searchTerm) ||
+                                     (guideline.fullReason && guideline.fullReason.toLowerCase().includes(searchTerm)) ||
+                                     (guideline.productName && guideline.productName.toLowerCase().includes(searchTerm));
+                const matchesCategory = !categoryFilter || guideline.category.includes(categoryFilter);
+                const matchesDifficulty = !difficultyFilter || guideline.difficulty === difficultyFilter;
+                
+                return matchesSearch && matchesCategory && matchesDifficulty;
+            });
+            
+            // 分页显示
+            const startIndex = 0;
+            const endIndex = Math.min(currentPage * itemsPerPage, filteredGuidelines.length);
+            const currentItems = filteredGuidelines.slice(startIndex, endIndex);
+            
+            if (currentItems.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                        <h5>未找到匹配的条款</h5>
+                        <p class="text-muted">尝试修改搜索条件或导入更多数据</p>
+                    </div>
+                `;
+                document.getElementById('load-more-btn').style.display = 'none';
+                document.getElementById('no-more-data').style.display = 'none';
+                return;
+            }
+            
+            container.innerHTML = currentItems.map(guideline => `
+                <div class="guideline-card">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h5 class="mb-1">
+                                ${guideline.title}
+                                <span class="badge bg-secondary ms-2">${guideline.number}</span>
+                            </h5>
+                            <div class="text-muted mb-2">${guideline.fullReason || '无详细描述'}</div>
+                            <div class="product-info">
+                                <small>
+                                    <i class="fas fa-mobile-alt"></i> ${guideline.productName || '未知产品'}
+                                    <span class="ms-3"><i class="fas fa-calendar"></i> ${guideline.rejectionDate || '未知时间'}</span>
+                                </small>
+                            </div>
+                            <div class="mt-2">
+                                <span class="badge bg-secondary me-2">${guideline.category}</span>
+                                <span class="difficulty-badge difficulty-${getDifficultyClass(guideline.difficulty)}">
+                                    ${guideline.difficulty}难度
+                                </span>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="text-success fw-bold">${guideline.successRate}% 成功率</div>
+                            <div class="text-muted small">使用 ${guideline.useCount} 次</div>
+                            <div class="text-muted small">最后: ${guideline.lastUsed}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <strong>处理方式:</strong>
+                        <div class="mt-2">
+                            ${guideline.solutions.map((solution, index) => `
+                                <div class="solution-item ${index === 0 ? 'success' : ''}">
+                                    <i class="fas fa-lightbulb me-2"></i>${solution}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-3">
+                        <button class="btn btn-sm btn-outline-primary" onclick="useGuideline(${guideline.id})">
+                            <i class="fas fa-envelope"></i> 使用此方案
+                        </button>
+                        <button class="btn btn-sm btn-outline-info" onclick="showGuidelineDetail(${guideline.id})">
+                            <i class="fas fa-info-circle"></i> 查看详情
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+            // 显示/隐藏加载更多按钮
+            const loadMoreBtn = document.getElementById('load-more-btn');
+            const noMoreData = document.getElementById('no-more-data');
+            
+            if (endIndex < filteredGuidelines.length) {
+                loadMoreBtn.style.display = 'block';
+                noMoreData.style.display = 'none';
+            } else {
+                loadMoreBtn.style.display = 'none';
+                noMoreData.style.display = 'block';
+            }
+        }
+
+        // 加载更多条款
+        function loadMoreGuidelines() {
+            currentPage++;
+            renderGuidelinesList();
+        }
+
+        // 搜索和过滤
+        document.getElementById('search-guidelines').addEventListener('input', function() {
+            currentPage = 1;
+            renderGuidelinesList();
+        });
+        
+        document.getElementById('filter-category').addEventListener('change', function() {
+            currentPage = 1;
+            renderGuidelinesList();
+        });
+        
+        document.getElementById('filter-difficulty').addEventListener('change', function() {
+            currentPage = 1;
+            renderGuidelinesList();
+        });
+
+        // 查看条款详情
+        function showGuidelineDetail(id) {
+            const guideline = allGuidelines.find(g => g.id === id);
+            if (guideline) {
+                const detailHtml = `
+                    <div class="modal fade" id="guidelineDetailModal" tabindex="-1">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">${guideline.title}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <strong>条款编号:</strong> ${guideline.number}<br>
+                                            <strong>分类:</strong> ${guideline.category}<br>
+                                            <strong>难度:</strong> <span class="difficulty-badge difficulty-${getDifficultyClass(guideline.difficulty)}">${guideline.difficulty}难度</span>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>产品名称:</strong> ${guideline.productName || '未知'}<br>
+                                            <strong>被拒时间:</strong> ${guideline.rejectionDate || '未知'}<br>
+                                            <strong>最后使用:</strong> ${guideline.lastUsed}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <strong>问题描述:</strong>
+                                        <div class="alert alert-light mt-2">${guideline.fullReason || '无详细描述'}</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <strong>统计信息:</strong>
+                                        <div class="row mt-2">
+                                            <div class="col-md-4 text-center">
+                                                <div class="display-6 text-primary">${guideline.useCount}</div>
+                                                <div class="text-muted">使用次数</div>
+                                            </div>
+                                            <div class="col-md-4 text-center">
+                                                <div class="display-6 text-success">${guideline.successRate}%</div>
+                                                <div class="text-muted">成功率</div>
+                                            </div>
+                                            <div class="col-md-4 text-center">
+                                                <div class="display-6 text-warning">${Math.round(100 - guideline.successRate)}%</div>
+                                                <div class="text-muted">失败率</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <strong>处理方式:</strong>
+                                        <div class="mt-2">
+                                            ${guideline.solutions.map((solution, index) => `
+                                                <div class="solution-item ${index === 0 ? 'success' : ''}">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <i class="fas fa-lightbulb me-2"></i>${solution}
+                                                        </div>
+                                                        ${index === 0 ? '<span class="badge bg-success">推荐方案</span>' : ''}
+                                                    </div>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-primary" onclick="useGuideline(${guideline.id})">
+                                        <i class="fas fa-envelope"></i> 使用此方案回复邮件
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // 添加modal到页面
+                const modalContainer = document.createElement('div');
+                modalContainer.innerHTML = detailHtml;
+                document.body.appendChild(modalContainer);
+                
+                // 显示modal
+                const modal = new bootstrap.Modal(document.getElementById('guidelineDetailModal'));
+                modal.show();
+                
+                // modal关闭后移除
+                document.getElementById('guidelineDetailModal').addEventListener('hidden.bs.modal', function() {
+                    modalContainer.remove();
+                });
+            }
+        }
+
+        // 使用条款方案
+        function useGuideline(id) {
+            const guideline = allGuidelines.find(g => g.id === id);
+            if (guideline) {
+                showPage('mail');
+                
+                // 设置邮件输入框的示例内容
+                const exampleMail = `Guideline ${guideline.number} - ${guideline.title}
+
+Issue Description:
+${guideline.fullReason || 'Please provide solution for this guideline issue.'}
+
+Next Steps:
+Please review and provide appropriate solution.`;
+                
+                document.getElementById('mail-input').value = exampleMail;
+                
+                // 自动解析
+                setTimeout(() => processMail(), 500);
+            }
+        }
+
+        // 清空邮件输入
+        function clearMailInput() {
+            document.getElementById('mail-input').value = '';
+            clearParseResults();
+        }
+
+        // 清空解析结果
+        function clearParseResults() {
+            document.getElementById('detected-guideline').innerHTML = '<div class="text-muted">等待解析...</div>';
+            document.getElementById('recommended-solutions').innerHTML = '<div class="text-muted">解析邮件后显示推荐方案</div>';
+            document.getElementById('reply-output').value = '';
+        }
+
+        // 处理邮件
+        function processMail() {
+            const mailText = document.getElementById('mail-input').value.trim();
+            
+            if (!mailText) {
+                showError('请输入被拒邮件内容');
+                return;
+            }
+            
+            // 显示加载状态
+            document.getElementById('detected-guideline').innerHTML = `
+                <div class="text-center">
+                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                        <span class="visually-hidden">解析中...</span>
+                    </div>
+                    <span class="ms-2">正在解析邮件...</span>
+                </div>
+            `;
+            
+            // 模拟解析过程
+            setTimeout(() => {
+                const guideline = extractGuidelineFromMail(mailText);
+                const solutions = getRecommendedSolutions(guideline);
+                
+                // 显示识别到的条款
+                const guidelineElement = document.getElementById('detected-guideline');
+                if (guideline) {
+                    guidelineElement.className = 'alert alert-success';
+                    guidelineElement.innerHTML = `
+                        <strong>${guideline.title}</strong><br>
+                        <small>编号: ${guideline.number} | 分类: ${guideline.category} | 成功率: ${guideline.successRate}%</small>
+                        <div class="mt-1">
+                            <span class="badge bg-secondary">${guideline.productName || '通用案例'}</span>
+                            <span class="badge bg-light text-dark ms-1">${guideline.rejectionDate || '历史案例'}</span>
+                        </div>
+                    `;
+                } else {
+                    guidelineElement.className = 'alert alert-warning';
+                    guidelineElement.innerHTML = `
+                        <strong>未识别到具体条款</strong><br>
+                        <small>请手动选择条款或检查邮件格式</small>
+                    `;
+                }
+                
+                // 显示推荐方案
+                const solutionsElement = document.getElementById('recommended-solutions');
+                solutionsElement.innerHTML = solutions.map((solution, index) => `
+                    <div class="solution-item ${index === 0 ? 'success' : ''}">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-lightbulb me-2"></i>${solution}
+                            </div>
+                            ${index === 0 ? '<span class="badge bg-success">最有效</span>' : ''}
+                        </div>
+                    </div>
+                `).join('');
+                
+                // 自动生成回复
+                generateReply();
+                
+            }, 1000);
+        }
+
+        // 从邮件中提取Guideline
+        function extractGuidelineFromMail(mailText) {
+            // 改进的解析逻辑
+            const lines = mailText.split('\n');
+            
+            // 查找包含Guideline的行
+            for (const line of lines) {
+                // 匹配 "Guideline X.X.X" 格式
+                const guidelineMatch = line.match(/Guideline\s+(\d+\.\d+(?:\.\d+)?)/i);
+                if (guidelineMatch) {
+                    const number = guidelineMatch[1];
+                    return findGuidelineByNumber(number);
+                }
+                
+                // 匹配 "X.X.X" 格式（单独的数字）
+                const numberMatch = line.match(/\b(\d+\.\d+(?:\.\d+)?)\b/);
+                if (numberMatch) {
+                    const number = numberMatch[1];
+                    const guideline = findGuidelineByNumber(number);
+                    if (guideline) return guideline;
+                }
+            }
+            
+            // 如果没有精确匹配，尝试模糊匹配
+            const allNumbers = mailText.match(/\b\d+\.\d+(?:\.\d+)?\b/g) || [];
+            for (const number of allNumbers) {
+                const guideline = findGuidelineByNumber(number);
+                if (guideline) return guideline;
+            }
+            
+            // 最后尝试关键词匹配
+            if (mailText.includes('screenshot') || mailText.includes('截图')) {
+                return findGuidelineByNumber('2.3.3');
+            } else if (mailText.includes('privacy') || mailText.includes('隐私')) {
+                return findGuidelineByNumber('5.1.2');
+            } else if (mailText.includes('purchase') || mailText.includes('购买')) {
+                return findGuidelineByNumber('3.1.1');
+            }
+            
+            return null;
+        }
+
+        // 根据编号查找条款
+        function findGuidelineByNumber(number) {
+            return allGuidelines.find(g => g.number === number) || 
+                   allGuidelines.find(g => g.title.includes(number));
+        }
+
+        // 获取推荐解决方案
+        function getRecommendedSolutions(guideline) {
+            if (guideline && guideline.solutions) {
+                return guideline.solutions;
+            }
+            
+            // 默认方案
+            return [
+                "根据问题描述提供详细解释",
+                "修改相关问题并重新提交审核",
+                "提供相关证明材料",
+                "联系苹果审核团队说明情况"
+            ];
+        }
+
+        // 生成回复
+        function generateReply() {
+            const mailText = document.getElementById('mail-input').value.trim();
+            const guidelineElement = document.getElementById('detected-guideline');
+            const solutionsElement = document.getElementById('recommended-solutions');
+            const language = document.getElementById('reply-language').value;
+            
+            if (!mailText) {
+                showError('请先输入邮件内容');
+                return;
+            }
+            
+            // 获取选中的方案
+            const solutions = Array.from(solutionsElement.querySelectorAll('.solution-item'))
+                .map(item => item.textContent.trim().replace('最有效', '').trim());
+            
+            const primarySolution = solutions[0] || "根据审核反馈进行相应修改";
+            
+            let reply = '';
+            
+            if (language === 'chinese' || language === 'bilingual') {
+                reply += `尊敬的App Review团队：
+
+感谢您对应用进行的审核。
+
+关于您提到的审核问题，我们已仔细检查并理解您的关注点。
+
+【问题分析】
+根据您的反馈，我们已识别相关问题点并进行了深入分析。
+
+【解决方案】
+${primarySolution}
+
+我们已经按照上述方案进行了相应的调整，确保应用完全符合App Store审核指南的要求。
+
+如果您需要进一步的信息或有任何疑问，请随时与我们联系。我们非常重视您的反馈，并将持续改进应用以确保最佳用户体验。
+
+再次感谢您的审核与指导。
+
+祝好，
+应用开发团队
+
+`;
+            }
+            
+            if (language === 'english' || language === 'bilingual') {
+                if (language === 'bilingual') reply += '\n---\n\n';
+                
+                reply += `Dear App Review Team,
+
+Thank you for reviewing our application.
+
+Regarding the review issue you mentioned, we have carefully examined and understood your concerns.
+
+【Issue Analysis】
+Based on your feedback, we have identified the relevant issues and conducted in-depth analysis.
+
+【Solution】
+${primarySolution}
+
+We have made corresponding adjustments according to the above solution to ensure the app fully complies with the App Store Review Guidelines.
+
+If you need further information or have any questions, please feel free to contact us. We highly value your feedback and will continue to improve the app to ensure the best user experience.
+
+Thank you again for your review and guidance.
+
+Best regards,
+App Development Team`;
+            }
+            
+            document.getElementById('reply-output').value = reply;
+        }
+
+        // 复制回复
+        function copyReply() {
+            const replyText = document.getElementById('reply-output').value;
+            if (!replyText.trim()) {
+                showError('请先生成回复内容');
+                return;
+            }
+            
+            navigator.clipboard.writeText(replyText).then(() => {
+                showSuccess('回复已复制到剪贴板！');
+            }).catch(err => {
+                console.error('复制失败:', err);
+                showError('复制失败，请手动复制');
+            });
+        }
+
+        // 初始化图表
+        function initCharts() {
+            // 分类分布饼图
+            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+            new Chart(categoryCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['性能与功能', '设计与用户体验', '安全、隐私与法律', '业务与支付', '隐私与数据保护', '其他'],
+                    datasets: [{
+                        data: [45, 25, 15, 8, 5, 2],
+                        backgroundColor: ['#0066CC', '#4A90D9', '#28a745', '#ffc107', '#dc3545', '#6c757d']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+
+            // 处理结果分布饼图
+            const resultCtx = document.getElementById('resultChart').getContext('2d');
+            new Chart(resultCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['过审', '依然被拒', '放弃', '重新发了', '其他'],
+                    datasets: [{
+                        data: [78.6, 15, 3, 2, 1.4],
+                        backgroundColor: ['#28a745', '#dc3545', '#6c757d', '#17a2b8', '#ffc107']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+
+            // 高频条款柱状图
+            const topCtx = document.getElementById('topGuidelinesChart').getContext('2d');
+            new Chart(topCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['2.1-所需信息', '4.3-垃圾邮件', '2.1-性能', '2.3.3-元数据', '1.1-安全', '3.1.1-支付', '4.1-仿制品', '2.5-软件', '5.1.2-隐私', '5.1.1-收集'],
+                    datasets: [{
+                        label: '使用次数',
+                        data: [133, 115, 92, 65, 42, 38, 27, 23, 15, 19],
+                        backgroundColor: '#0066CC'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '使用次数'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 难度分布饼图
+            const difficultyCtx = document.getElementById('difficultyChart').getContext('2d');
+            new Chart(difficultyCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['低难度', '中难度', '高难度'],
+                    datasets: [{
+                        data: [40, 45, 15],
+                        backgroundColor: ['#28a745', '#ffc107', '#dc3545']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+
+            // 月度趋势图
+            const trendCtx = document.getElementById('monthlyTrendChart').getContext('2d');
+            new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+                    datasets: [{
+                        label: '被拒次数',
+                        data: [85, 92, 78, 65, 88, 95, 102, 98, 87, 76, 82, 90],
+                        borderColor: '#0066CC',
+                        backgroundColor: 'rgba(0, 102, 204, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '被拒次数'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 数据管理功能
+        function uploadData() {
+            const fileInput = document.getElementById('data-file');
+            if (!fileInput.files[0]) {
+                showError('请选择要上传的文件');
+                return;
+            }
+            
+            showSuccess('文件上传功能需要后端支持。在本地版本中，请使用"手动添加案例"功能。');
+        }
+
+        function addNewCase() {
+            const product = document.getElementById('new-product').value.trim();
+            const date = document.getElementById('new-date').value;
+            const guideline = document.getElementById('new-guideline').value.trim();
+            const reason = document.getElementById('new-reason').value.trim();
+            const solution = document.getElementById('new-solution').value.trim();
+            const result = document.getElementById('new-result').value;
+            
+            if (!guideline || !solution) {
+                showError('请填写必填字段：条款和处理方式');
+                return;
+            }
+            
+            // 生成新的条款ID
+            const newId = allGuidelines.length > 0 ? Math.max(...allGuidelines.map(g => g.id)) + 1 : 1;
+            
+            // 提取条款编号
+            const numberMatch = guideline.match(/(\d+\.\d+(?:\.\d+)?)/);
+            const number = numberMatch ? numberMatch[1] : '未知';
+            
+            // 确定分类
+            let category = '其他';
+            if (number.startsWith('1.')) category = '安全、隐私与法律';
+            else if (number.startsWith('2.')) category = '性能与功能';
+            else if (number.startsWith('3.')) category = '业务与支付';
+            else if (number.startsWith('4.')) category = '设计与用户体验';
+            else if (number.startsWith('5.')) category = '隐私与数据保护';
+            
+            // 确定难度（简单逻辑）
+            let difficulty = '中';
+            if (result === '过审') difficulty = '低';
+            else if (result === '依然被拒' || result === '放弃') difficulty = '高';
+            
+            // 创建新条款
+            const newGuideline = {
+                id: newId,
+                number: number,
+                title: guideline,
+                category: category,
+                simpleReason: number,
+                fullReason: reason,
+                solutions: [solution],
+                successRate: result === '过审' ? 100 : result === '重新发了' ? 100 : 0,
+                useCount: 1,
+                difficulty: difficulty,
+                lastUsed: date,
+                productName: product || '手动添加',
+                rejectionDate: date
+            };
+            
+            // 添加到数据列表
+            allGuidelines.unshift(newGuideline);
+            
+            // 更新界面
+            updateStatistics(allGuidelines);
+            renderTopGuidelines();
+            renderGuidelinesList();
+            
+            // 清空表单
+            document.getElementById('new-product').value = '';
+            document.getElementById('new-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('new-guideline').value = '';
+            document.getElementById('new-reason').value = '';
+            document.getElementById('new-solution').value = '';
+            document.getElementById('new-result').value = '过审';
+            
+            showSuccess(`新案例已添加：${guideline} (${product})`);
+        }
+
+        // 工具函数
+        function showError(message) {
+            alert('错误: ' + message);
+        }
+
+        function showSuccess(message) {
+            alert('成功: ' + message);
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 加载数据
+            loadGuidelinesData();
+            
+            // 设置默认页面
+            showPage('home');
+            
+            // 初始化邮件处理页面
+            document.getElementById('mail-input').addEventListener('input', function() {
+                if (this.value.trim()) {
+                    clearParseResults();
+                }
+            });
+        });
+    </script>
 </body>
 </html>
